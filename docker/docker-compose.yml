@@ -30,58 +30,37 @@ services:
     image: docker.elastic.co/logstash/logstash:8.15.0
     container_name: logstash
     volumes:
-      - logstash_config:/usr/share/logstash/config
-      - logstash_pipeline:/usr/share/logstash/pipeline
+      - ./logstash/pipeline:/usr/share/logstash/pipeline
     ports:
-      - "1514:1514/udp"
-    environment:
-      - xpack.monitoring.enabled=false
+      - "1514:1514/udp"    # Syslog UDP
     networks:
       - es_network
     depends_on:
       - elasticsearch
 
+  # Víctima con SSH y rsyslog, ya configurada para enviar logs a Logstash
+  victim-ssh:
+    build: ./victim-ssh
+    container_name: victim-ssh
+    ports:
+      - "2222:2222"          # SSH expuesto en el host en el puerto 2222 (didáctico)
+    networks:
+      - es_network
+
+  # Contenedor con THC Hydra (imagen oficial)
   hydra:
-    image: ghcr.io/linuxserver/hydra
-    container_name: hydra
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
+    image: vanhauser/hydra
+    container_name: hydra-cli
+    entrypoint: ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+    tty: true
+    stdin_open: true
+    networks:
+      - es_network
     volumes:
-      - hydra_config:/config
-      - nzb_downloads:/downloads
-    ports:
-      - 5075:5075
-    restart: unless-stopped
-    
-  hydra2:
-    image: linuxserver/hydra2
-    container_name: hydra2
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/London
-    volumes:
-      - hydra2_config:/config
-      - nzb_downloads:/downloads
-    ports:
-      - 5076:5076
-    restart: unless-stopped
+      - ./wordlists:/wordlists
 
 volumes:
   es_data:
-    driver: local
-  logstash_config:
-    driver: local
-  logstash_pipeline:
-    driver: local
-
-  hydra_config:
-    driver: local
-  hydra2_config:
-    driver: local
-  nzb_downloads:
     driver: local
 
 networks:
