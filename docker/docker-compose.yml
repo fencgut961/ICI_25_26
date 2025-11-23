@@ -1,0 +1,89 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+    container_name: elasticsearch-node
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - es_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.15.0
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    networks:
+      - es_network
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.15.0
+    container_name: logstash
+    volumes:
+      - logstash_config:/usr/share/logstash/config
+      - logstash_pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "1514:1514/udp"
+    environment:
+      - xpack.monitoring.enabled=false
+    networks:
+      - es_network
+    depends_on:
+      - elasticsearch
+
+  hydra:
+    image: ghcr.io/linuxserver/hydra
+    container_name: hydra
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - hydra_config:/config
+      - nzb_downloads:/downloads
+    ports:
+      - 5075:5075
+    restart: unless-stopped
+    
+  hydra2:
+    image: linuxserver/hydra2
+    container_name: hydra2
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/London
+    volumes:
+      - hydra2_config:/config
+      - nzb_downloads:/downloads
+    ports:
+      - 5076:5076
+    restart: unless-stopped
+
+volumes:
+  es_data:
+    driver: local
+  logstash_config:
+    driver: local
+  logstash_pipeline:
+    driver: local
+
+  hydra_config:
+    driver: local
+  hydra2_config:
+    driver: local
+  nzb_downloads:
+    driver: local
+
+networks:
+  es_network:
+    driver: bridge
