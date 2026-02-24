@@ -1,119 +1,20 @@
-# 🔥 Prueba del Laboratorio ELK + Hydra + SSH Víctima
+# ICI 2025/2026 – Incidentes de Ciberseguridad
 
-Este documento describe los pasos finales para **probar el entorno ya montado** compuesto por:
+Repositorio que organiza las actividades prácticas del módulo **Incidentes de Ciberseguridad** correspondientes al curso 2025/2026.
 
-- Elasticsearch
-- Logstash
-- Kibana
-- Contenedor víctima con SSH
-- Contenedor atacante con Hydra
+La rama `main` actúa exclusivamente como índice general del repositorio.  
+Cada actividad se desarrolla de forma independiente en su propia rama.
 
-Aquí solo se incluyen los pasos necesarios para **ver que todo funciona**.
+Las prácticas están diseñadas para realizarse en **entornos de laboratorio controlados**, donde se simulan escenarios reales de detección, análisis y gestión de incidentes de seguridad.
 
 ---
 
-## ✅ 1. Levantar toda la infraestructura
+## 📂 Ramas y actividades
 
-```bash
-docker compose up --build
-```
-
-Comprueba que la víctima (`victim-ssh`) está funcionando:
-
-```bash
-docker compose logs -f victim-ssh
-```
-
-Debes ver mensajes indicando que **rsyslog está instalado y corriendo**, ya que es el encargado de enviar los logs a Logstash.
+| Rama | Actividad | Descripción |
+|------|-----------|------------|
+| [act/siem_elk](https://github.com/fencgut961/ICI_25_26/tree/act/siem_elk) | Implementación de un SIEM con Elastic Stack (ELK) | Despliegue y configuración de un entorno de monitorización para la detección y análisis de eventos de seguridad en laboratorio |
 
 ---
 
-## ✅ 2. Verificar que la víctima está enviando logs
-
-Realiza varios intentos fallidos de autenticación contra el SSH:
-
-```bash
-ssh student@localhost -p 2222
-```
-
-Introduce una contraseña incorrecta varias veces.
-
-Ahora revisa Logstash:
-
-```bash
-docker logs -f logstash
-```
-
-Si ves líneas como:
-
-```
-Failed password for student ...
-```
-
-entonces la cadena de registro está funcionando:
-
-**SSH → rsyslog → Logstash → Elasticsearch**
-
----
-
-## ✅ 3. Ver los logs en Kibana
-
-1. Accede a Kibana:  
-   👉 http://localhost:5601
-
-2. Crea un Data View en este enlace:  
-   👉 **http://localhost:5601/app/management/kibana/dataViews/create**
-
-3. Configura el Data View:
-
-- **Name:** `syslog`
-- **Pattern:** `syslog-*`
-- **Time field:** `@timestamp`
-
-4. Abre **Discover** y selecciona el Data View `syslog`.
-
-Deberías ver eventos como:
-
-- Failed password
-- Accepted password
-- usuario objetivo
-- IP de origen
-- fecha y hora del intento
-
----
-
-## ✅ 4. Lanzar el ataque con Hydra
-
-Accede al contenedor:
-
-```bash
-docker exec -it hydra-cli sh
-```
-
-Opcional: crear un wordlist rápido:
-
-```bash
-cat > /wordlists/demo.txt << 'EOF'
-123456
-password
-Password123
-EOF
-```
-
-Lanza el ataque:
-
-```bash
-hydra -l student -P /wordlists/demo.txt ssh://victim-ssh:2222
-```
-
-- `-l student` → usuario objetivo
-- `-P /wordlists/demo.txt` → diccionario de contraseñas
-- `ssh://victim-ssh:2222` → servicio y puerto expuesto de la víctima
-
-Durante el ataque, puedes ver los eventos en Logstash:
-
-```bash
-docker logs -f logstash
-```
-
-Cada intento se registrará y aparecerá también en Kibana.
+Las actividades del repositorio están orientadas a la práctica técnica y al análisis operativo de incidentes en entornos simulados.
