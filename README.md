@@ -1,20 +1,18 @@
-# ICI 2025/2026 – Incidentes de Ciberseguridad
+# Auditando una aplicación web en 2026
+Guía estructurada para solventar los ejercicios propuestos para la auditoría de OWASP JUICE SHOP. 
 
-Repositorio que organiza las actividades prácticas del módulo **Incidentes de Ciberseguridad** correspondientes al curso 2025/2026.
 
-La rama `main` actúa exclusivamente como índice general del repositorio.  
-Cada actividad se desarrolla de forma independiente en su propia rama.
+Para poder practicar "en casa" con tu propio PC, es gratuito:
 
-Las prácticas están diseñadas para realizarse en **entornos de laboratorio controlados**, donde se simulan escenarios reales de detección, análisis y gestión de incidentes de seguridad.
+- Necesitas tener Docker Desktop: https://www.docker.com/products/docker-desktop/
 
----
+Una vez instalado Docker, solamente necesitas ejecutar el siguiente comando:
 
-## 📂 Ramas y actividades
+Abrimos una terminal CMD o Powershell y hacemos los siguientes comandos:
 
-| Rama | Actividad | Descripción |
-|------|-----------|------------|
-| [act/siem_elk](https://github.com/fencgut961/ICI_25_26/tree/act/siem_elk) | Implementación de un SIEM con Elastic Stack (ELK) | Despliegue y configuración de un entorno de monitorización para la detección y análisis de eventos de seguridad en laboratorio |
-
----
-
-Las actividades del repositorio están orientadas a la práctica técnica y al análisis operativo de incidentes en entornos simulados.
+1. Nos traemos la imagen:
+    `docker pull bkimminich/juice-shop` o `docker pull fencgut961/juice-shop` 
+2. Montamos la imagen:
+    `docker run --rm -p 3000:3000 --name juice-shop bkimminich/juice-shop` o `docker run --rm -p 3000:3000 --name juice-shop fencgut961/juice-shop`
+3. Dejamos esa terminal abierta
+4. Ya deberiamos poder acceder a la web desde el navegador en: http://localhost:3000/
