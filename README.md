@@ -14,7 +14,7 @@ Las prácticas están diseñadas para realizarse en **entornos de laboratorio co
 | Rama | Actividad | Descripción |
 |------|-----------|------------|
 | [act/siem_elk](https://github.com/fencgut961/ICI_25_26/tree/act/siem_elk) | Implementación de un SIEM con Elastic Stack (ELK) | Despliegue y configuración de un entorno de monitorización para la detección y análisis de eventos de seguridad en laboratorio |
-| [act/audit_app_web](https://github.com/fencgut961/ICI_25_26/tree/act/audit_app_web) | Auditoría de una aplicación web | Análisis de vulnerabilidades y evaluación de riesgos en una aplicación web dentro de un entorno controlado |
+| [act/owasp-juice-shop](https://github.com/fencgut961/ICI_25_26/tree/act/owasp-juice-shop) | Auditoría de una aplicación web | Análisis de vulnerabilidades y evaluación de riesgos en una aplicación web dentro de un entorno controlado |
 
 ---
 
