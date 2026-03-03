@@ -11,10 +11,12 @@ Se trata de una práctica orientada a ciberseguridad y automatización de proces
 ---
 
 ## 📂 Contenido de la Rama
+```
 .
 ├── workflow.json # Workflow exportado de n8n
 ├── docker-compose.yml # Configuración Docker para levantar n8n
 └── README.md # Documentación del proyecto
+```
 
 
 ### 📌 Archivos incluidos
