@@ -1,0 +1,318 @@
+{
+  "name": "Fake Login + Counter per email + MailHog alert (5 fails)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "practice-login",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "2e3db011-35e3-4cfd-9714-7dea70e6e7ae",
+      "name": "Webhook (POST /practice-login)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        96
+      ],
+      "webhookId": "10a91b3c-50a9-4166-a651-be59170a7cb9"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Read body reliably (n8n webhook usually provides $json.body)\nconst body = $json.body ?? $json;\nconst email = String(body.email ?? '').trim().toLowerCase();\nconst pass = String(body.pass ?? '').trim();\n\n// Fake login: ANY email is valid if pass === \"1234\"\nconst loginOk = (pass === '1234');\nconst statusCode = loginOk ? 200 : 401;\n\nreturn [{\n  email,\n  statusCode\n}];"
+      },
+      "id": "77e33c38-e44c-4cff-9bd5-8b2f4592c6bc",
+      "name": "Fake Login (Code) -> statusCode",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "41145b5c-ba6a-4378-9d88-f2f37e61f7ba",
+              "leftValue": "={{ $json.statusCode }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {
+          "looseTypeValidation": true
+        }
+      },
+      "id": "96ab9e8c-f9c3-492d-8fca-71963f517c4a",
+      "name": "IF statusCode == 200?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $json.email;\n\nconst data = $getWorkflowStaticData('global');\nif (!data.attemptsByEmail) data.attemptsByEmail = {};\n\ndata.attemptsByEmail[email] = 0;\n\nreturn [{\n  debugEmail: email,\n  attemptsByEmail: data.attemptsByEmail,\n  failedAttempts: data.attemptsByEmail[email],\n}];"
+      },
+      "id": "3551f17a-f127-4cc8-bec9-f51bc45df863",
+      "name": "Reset counter on success (Code)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, message: 'Login successful', failedAttempts: 0 } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "67d7fe3f-038f-485c-ae21-0add75c8cef2",
+      "name": "Respond 200",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const email = $json.email;\nconst data = $getWorkflowStaticData('global');\nif (!data.attemptsByEmail) data.attemptsByEmail = {};\n\nconst prev = data.attemptsByEmail[email];\nconst count = prev + 1;\n\ndata.attemptsByEmail[email] = count;\n\nreturn [{\n  email,\n  prevAttempts: prev,\n  failedAttempts: count,\n  reached5: (count >= 5)\n}];"
+      },
+      "id": "a444a648-d0bc-452b-b597-7aff118449f8",
+      "name": "Increment on fail (Code)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "118ac7ec-1ace-4583-879f-3016b75793ac",
+              "leftValue": "={{ $json.failedAttempts }}",
+              "rightValue": 5,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "6fdff655-c884-426e-b81a-e1a01769637b",
+      "name": "IF reached 5 fails?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        208,
+        272
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "fromEmail": "no-reply@practice.local",
+        "toEmail": "={{$json.email}}",
+        "subject": "Alerta: 5 intentos fallidos de inicio de sesión",
+        "text": "Se han detectado 5 intentos fallidos de acceso para este email. La contraseña introducida era incorrecta.",
+        "options": {}
+      },
+      "id": "b46a9fdd-f7b0-4672-b152-f7ccb249dbf7",
+      "name": "Send Email (MailHog SMTP)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2,
+      "position": [
+        448,
+        96
+      ],
+      "webhookId": "8a5c3480-76d4-49e8-9fef-0769e2e0b8b6",
+      "credentials": {
+        "smtp": {
+          "id": "tev8VPLgsaN3H04U",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: false, message: 'Invalid credentials', failedAttempts: $json.failedAttempts, alertSent: true } }}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "id": "ea87e086-4b53-4100-8917-ff81165df3fb",
+      "name": "Respond 401 (after alert)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        880,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Reset counter after alert email\nconst email = $json.email;\nconst data = $getWorkflowStaticData('global');\nif (!data.attemptsByEmail) data.attemptsByEmail = {};\ndata.attemptsByEmail[email] = 0;\nreturn [{ email, failedAttempts: 5, alertSent: true }];"
+      },
+      "id": "d3b03ba0-971b-4627-aec0-620ce2070043",
+      "name": "Reset counter after alert (Code)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        96
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook (POST /practice-login)": {
+      "main": [
+        [
+          {
+            "node": "Fake Login (Code) -> statusCode",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fake Login (Code) -> statusCode": {
+      "main": [
+        [
+          {
+            "node": "IF statusCode == 200?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF statusCode == 200?": {
+      "main": [
+        [
+          {
+            "node": "Reset counter on success (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment on fail (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset counter on success (Code)": {
+      "main": [
+        [
+          {
+            "node": "Respond 200",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment on fail (Code)": {
+      "main": [
+        [
+          {
+            "node": "IF reached 5 fails?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF reached 5 fails?": {
+      "main": [
+        [
+          {
+            "node": "Send Email (MailHog SMTP)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 401 (after alert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Email (MailHog SMTP)": {
+      "main": [
+        [
+          {
+            "node": "Reset counter after alert (Code)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset counter after alert (Code)": {
+      "main": [
+        [
+          {
+            "node": "Respond 401 (after alert)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "9d734f39-9bf1-43c8-be9b-f3c212c1ad1c",
+  "meta": {
+    "instanceId": "957f0e714bcfbb6f61498c99c8de1f6207057355a0f2a7b6eafac351e19c79ca"
+  },
+  "id": "g4t5RrSxQJ2GM1nb",
+  "tags": []
+}
